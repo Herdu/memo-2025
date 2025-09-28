@@ -37,6 +37,7 @@ public:
     void startMelody(const Melody &melody);
     void update();
     bool isPlaying();
+    void stopMelody();
 };
 
 // ----------------- LCD -----------------
@@ -50,6 +51,7 @@ public:
     void setup();
     void print(const char *line1, const char *line2);
     void print(const String &line1, const String &line2);
+    void clear();
 };
 
 // ----------------- Button + LED -----------------
@@ -59,13 +61,73 @@ private:
     int pinButton;
     int pinLed;
     const Melody *melody;
+    bool lastButtonState = false;
+    bool soundPlayed = false; // Flag to prevent sound spam
+    int buttonId;
 
 public:
-    ButtonLed(int button, int led, const Melody *m);
+    ButtonLed(int button, int led, const Melody *m, int id);
 
     void setup();
     bool isPressed();
+    bool wasReleased();
     void ledOn();
     void ledOff();
     void handle();
+    void handle(bool allowLedControl); // New overload
+    void flashLed(int duration = 300);
+    int getId() const;
+};
+
+// ----------------- Game States -----------------
+enum GameState {
+    WAITING_TO_START,
+    SHOWING_SEQUENCE,
+    WAITING_FOR_INPUT,
+    GAME_OVER,
+    LEVEL_COMPLETE
+};
+
+// ----------------- Memory Game -----------------
+class MemoryGame
+{
+private:
+    static const int MAX_SEQUENCE_LENGTH = 20;
+    static const int MAX_BUTTONS = 4;
+    
+    int sequence[MAX_SEQUENCE_LENGTH];
+    int sequenceLength;
+    int currentStep;
+    int playerInput;
+    GameState gameState;
+    unsigned long stateTimer;
+    unsigned long levelStartTime;
+    int score;
+    int level;
+    bool waitingForSequenceComplete;
+    
+    // Timing constants
+    static const unsigned long SEQUENCE_DELAY = 800;
+    static const unsigned long INPUT_TIMEOUT = 5000;
+    static const unsigned long GAME_OVER_DISPLAY = 3000;
+    static const unsigned long LEVEL_COMPLETE_DISPLAY = 2000;
+
+public:
+    MemoryGame();
+    
+    void setup();
+    void update();
+    void startNewGame();
+    void startSequence();
+    void generateNextSequence();
+    void showSequence();
+    void processPlayerInput(int buttonId);
+    bool isWaitingForInput();
+    void displayGameState();
+    GameState getState();
+    int getScore();
+    int getLevel();
+    bool isShowingSequence();
+    void gameOver();
+    void levelComplete();
 };
